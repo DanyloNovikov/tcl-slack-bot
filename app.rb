@@ -13,7 +13,7 @@ end
 
 post '/login' do
   token = JWT.encode(params, ENV.fetch('TCL_SECRET', nil), 'none')
-  link = ENV.fetch('PROD_LOGIN', nil) + "?token=#{token}"
+  link = ENV.fetch('PROD_LOGIN', nil) + "?code=#{token}"
 
   SlackClient.send_message(
     channel: params[:channel_name],

@@ -21,11 +21,7 @@ class SlackClient
     private
 
     def send_request(url: String, params: Hash, headers: Hash)
-      conn = Faraday.new(url, params,
-                         headers)
-
-      response = conn.post
-      JSON.parse(response.body)
+      JSON.parse(Faraday.post(url, params, headers).body)
     end
   end
 end
