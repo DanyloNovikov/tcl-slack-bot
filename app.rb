@@ -9,13 +9,13 @@ Dotenv.load
 require_relative 'services/slack_client'
 require_relative 'services/tcl_client'
 require_relative 'services/prepare_message_service'
+require_relative 'services/jwt_service'
+require_relative 'services/validator'
+
+before { @access_token = JwtService.generate_token(params:) }
 
 post '/help' do
-  message = PrepareMessageService.prepare_help(list: response)
-  SlackClient.send_message(
-    channel: params[:channel_name],
-    message:
-  )
+  # binding.pry
 end
 
 post '/login' do
@@ -23,81 +23,50 @@ post '/login' do
   code = JWT.encode(params, ENV.fetch('TCL_SECRET', nil), 'none')
   link = "#{ENV.fetch('TCL_DOMAIN', '')}/users/sign_in?code=#{code}"
 
-  SlackClient.send_message(
-    channel: params[:channel_name],
-    message: link
-  )
+  SlackClient.send_message(channel: params[:channel_id], message: link)
 end
 
 post '/list_projects' do
-  params[:external_user_id] = params.delete(:user_id)
-  token = JWT.encode(
-    params.slice(:external_user_id, :channel_id),
-    ENV.fetch('TCL_SECRET', nil),
-    'none'
-  )
+  response = TclClient.get_projects(access_token: @access_token)
+  message = PrepareMessageService.list_projects(response:)
 
-  response = TclClient.get_projects(access_token: token)
-  message = PrepareMessageService.list_projects(response: response)
-  SlackClient.send_message(
-    channel: params[:channel_name],
-    message:
-  )
+  SlackClient.send_message(channel: params[:channel_id], message:)
 end
 
 post '/link_project' do
-  token = JWT.encode(
-    params.slice(:external_user_id, :channel_id),
-    ENV.fetch('TCL_SECRET', nil),
-    'none'
-  )
+  project_key = params[:text].split.first
+  response = TclClient.link_project(access_token: @access_token, project_key:)
+  message = PrepareMessageService.link_project(response:)
 
-  response = TclClient.link_project(
-    access_token: token,
-    project_key: params[:text].split.first
-  )
-
-  message = PrepareMessageService.link_project(response: response)
-  SlackClient.send_message(
-    channel: params[:channel_name],
-    message: message 
-  )
+  SlackClient.send_message(channel: params[:channel_id], message:)
 end
 
 post '/unlink_project' do
-  token = JWT.encode(
-    params.slice(:external_user_id, :channel_id),
-    ENV.fetch('TCL_SECRET', nil),
-    'none'
-  )
+  project_key = params[:text].split.first
+  response = TclClient.unlink_project(access_token: @access_token, project_key:)
+  message = PrepareMessageService.unlink_project(response:)
 
-  response = TclClient.unlink_project(
-    access_token: token,
-    project_key: params[:text].split.first
-  )
-
-  message = PrepareMessageService.unlink_project(response: response)
-  SlackClient.send_message(
-    channel: params[:channel_name],
-    message: message 
-  )
+  SlackClient.send_message(channel: params[:channel_id], message:)
 end
 
 post '/list_event_notifications' do
-  token = JWT.encode(
-    params.slice(:external_user_id, :channel_id),
-    ENV.fetch('TCL_SECRET', nil),
-    'none'
-  ) 
+  project_key = params[:text].split.first
+  response = TclClient.list_event_notifications(access_token: @access_token, project_key:)
+  message = PrepareMessageService.list_event_notifications(response:)
 
-  response = TclClient.list_event_notifications(
-    access_token: token,
-    project_key: params[:text].split.first
+  SlackClient.send_message(channel: params[:channel_id], message:)
+end
+
+post '/change_status_event' do
+  return unless Validator.length?(params:, length: 2)
+
+  tcl_params = params[:text].split
+  response = TclClient.change_status_event(
+    access_token: @access_token,
+    project_key: tcl_params[0],
+    event: tcl_params[1]
   )
 
-  message = PrepareMessageService.list_event_notifications(response: response)
-  SlackClient.send_message(
-    channel: params[:channel_name],
-    message: message 
-  )
+  message = PrepareMessageService.change_status_event(response:)
+  SlackClient.send_message(channel: params[:channel_id], message:)
 end
