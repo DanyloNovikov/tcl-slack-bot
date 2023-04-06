@@ -15,7 +15,10 @@ require_relative 'services/validator'
 before { @access_token = JwtService.generate_token(params:) }
 
 post '/help' do
-  # binding.pry
+  SlackClient.send_message(
+    channel: params[:channel_id],
+    message: PrepareMessageService.help
+  )
 end
 
 post '/login' do

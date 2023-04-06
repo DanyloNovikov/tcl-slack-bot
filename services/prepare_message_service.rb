@@ -3,7 +3,13 @@
 class PrepareMessageService
   class << self
     def help
-      # binding.pry
+      "/help (instruction)\n" \
+      "/login (login to TCL company account and sync Slack to TCL)\n" \
+      "/list_projects (show the list of projects of TCL company account)\n" \
+      "/link_project [title] (connect Slack to specific project of TCL company account)\n" \
+      "/unlink_project [title] (unlink Slack from specific project of TCL company account)\n" \
+      "/list_event_notifications (show the list of all possible events to notify about)\n" \
+      "/change_status_event [eventname] (select/deselect event to notify about)"
     end
 
     def list_projects(response:)
