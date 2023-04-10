@@ -12,7 +12,7 @@ require_relative 'services/prepare_message_service'
 require_relative 'services/jwt_service'
 require_relative 'services/validator'
 
-before { @access_token = JwtService.generate_token(params:) }
+before { @access_token = JwtService.generate_token(params) }
 
 post '/help' do
   SlackClient.send_message(
@@ -23,6 +23,7 @@ end
 
 post '/login' do
   params[:external_user_id] = params.delete(:user_id)
+  params[:exp] = ENV.fetch('EXPIRE_TIME', 1682444575).to_i
   code = JWT.encode(params, ENV.fetch('TCL_SECRET', nil), 'none')
   link = "#{ENV.fetch('TCL_DOMAIN', '')}/users/sign_in?code=#{code}"
 
