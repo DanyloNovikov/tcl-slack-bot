@@ -25,7 +25,7 @@ post '/login' do
   params[:external_user_id] = params.delete(:user_id)
   params[:exp] = ENV.fetch('EXPIRE_TIME', 1682444575).to_i
   code = JWT.encode(params, ENV.fetch('TCL_SECRET', nil), 'none')
-  link = "#{ENV.fetch('TCL_DOMAIN', '')}/users/sign_in?code=#{code}"
+  link = "<#{ENV.fetch('TCL_DOMAIN', '')}/users/sign_in?code=#{code}| Link your accounts with this link>"
 
   SlackClient.send_message(channel: params[:channel_id], message: link)
 end
